@@ -1,8 +1,8 @@
 # Voxel4D
 
-> A C++17 research proof of concept for multi-view RGB-D fusion into a Sparse Voxel Octree (SVO), leaf-grid DDA traversal, and Doppler-field sampling.
+> A C++17 research proof of concept for timestamped multi-view RGB-D snapshots in Sparse Voxel Octrees (SVOs), leaf-grid DDA traversal, and Doppler-field sampling.
 
-**Voxel4D is an early research prototype, not a production-ready reconstruction engine.** Its purpose is to provide a small, reproducible code base for experimenting with the lower-level pieces of a future 4D spatial-capture pipeline. The current implementation uses deterministic synthetic RGB-D inputs rather than physical cameras.
+**Voxel4D is an early research prototype, not a production-ready reconstruction engine.** Its purpose is to provide a small, reproducible code base for experimenting with the lower-level pieces of a future 4D spatial-capture pipeline. The current implementation uses deterministic synthetic RGB-D inputs and bounded timestamped spatial snapshots rather than physical cameras or a motion-estimation system.
 
 | Project property | Current value |
 |---|---|
@@ -15,12 +15,13 @@
 
 ## What the PoC demonstrates
 
-The executable exercises a coherent baseline pipeline. It generates two virtual pinhole-camera views of a moving sphere, serializes them as RGB-D samples, projects them into a bounded SVO, tests a ray against occupied leaf voxels with DDA, and samples a classical acoustic Doppler field around a moving source.
+The executable exercises a coherent baseline pipeline. It generates two virtual pinhole-camera views of a moving sphere, serializes them as RGB-D samples, projects each selected frame into an independent bounded SVO, retains those SVOs as timestamped snapshots, tests a ray against the latest occupied leaf voxels with DDA, and samples a classical acoustic Doppler field around a moving source.
 
-| Component | Included in v0.1.0 | Important limit |
+| Component | Included on the current main branch | Important limit |
 |---|---|---|
 | Sparse Voxel Octree | Yes | The PoC allocates sibling nodes when refining an occupied path; it is not a memory-optimized production SVO. |
 | Pixel-to-voxel fusion | Yes | Inputs are synthetic RGB-D; calibration, uncertainty, and sensor timing are not yet modeled. |
+| Timestamped SVO snapshots | Yes | Snapshots are CPU-resident, discrete, strictly time-ordered, and retained with a fixed count; no interpolation or temporal fusion is performed. |
 | DDA voxel traversal | Yes | Traversal runs at the finest leaf resolution and is CPU-only. |
 | Acoustic Doppler sampling | Yes | It does not simulate acoustic occlusion, reflections, diffraction, or reverberation. |
 | Optical Doppler helper | Yes | It is a numerical helper, not an optical renderer. |
@@ -56,7 +57,7 @@ ctest --test-dir build --output-on-failure
 ./build/voxel4d_poc
 ```
 
-The executable writes deterministic RGB-D CSV frames under `build/data/` when run from the build directory. A successful run reports the number of fused samples, SVO nodes, a DDA hit, and Doppler-field samples.
+The executable writes deterministic RGB-D CSV frames under `build/data/` when run from the build directory. A successful run reports the number of fused samples, retained temporal snapshots, latest-SVO nodes, a DDA hit, and Doppler-field samples.
 
 ### Sanitizer run on GCC or Clang
 
@@ -96,7 +97,7 @@ flowchart LR
     D --> F[Doppler field sampling]
 ```
 
-Read [the architecture note](docs/architecture.md) for data contracts, coordinate conventions, and known limitations. The original Portuguese research notes are retained under `docs/` for historical context; they are **concept notes**, not a statement of implemented capability.
+Read [the architecture note](docs/architecture.md) and the [temporal voxel map design](docs/temporal-voxel-map.md) for data contracts, coordinate conventions, validation criteria, and known limitations. The original Portuguese research notes are retained under `docs/` for historical context; they are **concept notes**, not a statement of implemented capability.
 
 ## Contributing
 

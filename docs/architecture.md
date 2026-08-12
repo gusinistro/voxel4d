@@ -4,7 +4,7 @@
 
 Voxel4D is a compact C++17 proof of concept for experimenting with a deterministic path from multiple RGB-D observations to a voxel representation. It is designed to make its state, units, and limitations visible rather than to claim full real-time 4D reconstruction.
 
-> **Scope boundary:** the repository currently processes only its own synthetic RGB-D frames. It does not implement camera capture, calibration, visual odometry, LiDAR/radar/thermal fusion, neural inference, spherical harmonics, Gaussian splatting, free-viewpoint rendering, GPU acceleration, or physical sound transport.
+> **Scope boundary:** the repository currently processes only its own synthetic RGB-D frames and bounded timestamped SVO snapshots. It does not implement camera capture, calibration, visual odometry, sensor-time synchronization, LiDAR/radar/thermal fusion, neural inference, spherical harmonics, Gaussian splatting, free-viewpoint rendering, GPU acceleration, or physical sound transport.
 
 ## Data flow
 
@@ -13,10 +13,11 @@ flowchart TD
     A[Virtual camera rig] --> B[Sphere rasterized as RGB-D samples]
     B --> C[CSV: x, y, depth_m, r, g, b]
     C --> D[Camera-ray reconstruction]
-    D --> E[Bounded Sparse Voxel Octree]
-    E --> F[Occupied leaf query]
-    F --> G[Leaf-grid DDA traversal]
-    E --> H[Receiver-position Doppler samples]
+    D --> E[Per-frame bounded Sparse Voxel Octree]
+    E --> F[Timestamped Temporal Voxel Map]
+    F --> G[Latest occupied leaf query]
+    G --> H[Leaf-grid DDA traversal]
+    F --> I[Receiver-position Doppler samples]
 ```
 
 The pipeline intentionally writes and reads the CSV frames before fusion. This exercises a simple serialized input boundary that can later be replaced by calibrated camera, LiDAR, or other sensor adapters.
@@ -42,12 +43,13 @@ The pipeline intentionally writes and reads the CSV frames before fusion. This e
 | `SyntheticDataGenerator` | Creates deterministic two-camera RGB-D observations of a moving sphere. | Throws for invalid dimensions, frame counts, malformed CSV, or unavailable output paths. |
 | `Voxelizer` | Converts an RGB-D pixel into a world-space point along the corresponding camera ray. | Validates camera intrinsics, image bounds, and depth clipping range before insertion. |
 | `SparseVoxelOctree` | Stores `VoxelAttribute` values at a configurable maximum depth. | Rejects out-of-bounds insertions and exposes empty leaves with density zero. |
+| `TemporalVoxelMap` | Retains discrete SVO snapshots in strictly increasing timestamp order. | Uses signed nanosecond timestamps, rejects null, duplicate, and out-of-order snapshots, and evicts only the oldest snapshot when its fixed count is exceeded. It is not thread-safe. |
 | `VoxelRaytracer` | Traverses cells at the finest leaf resolution using a 3D DDA. | Requires a non-zero ray direction and returns the first occupied cell, if any. |
 | `DopplerSimulator` | Computes classical acoustic ratios and a longitudinal relativistic optical helper. | Assumes a stationary acoustic medium; sound-field samples are receivers, not a transport simulation. |
 
 ## SVO implementation detail
 
-The data structure is **sparse with respect to occupied paths**, but it is deliberately simple: refining an occupied node allocates eight children. This makes the code easy to inspect but is not the compact pointerless or DAG-based SVO design commonly used in production renderers. Memory compaction, node pooling, Morton ordering, bitmasks, temporal eviction, and GPU-resident storage remain future work.
+The data structure is **sparse with respect to occupied paths**, but it is deliberately simple: refining an occupied node allocates eight children. This makes the code easy to inspect but is not the compact pointerless or DAG-based SVO design commonly used in production renderers. Memory compaction, node pooling, Morton ordering, bitmasks, confidence-based temporal aging, and GPU-resident storage remain future work.
 
 ## DDA implementation detail
 
@@ -66,4 +68,4 @@ The acoustic helper applies the classical Doppler relationship for a stationary 
 
 ## Evolution path
 
-The recommended development order is to preserve deterministic validation at every stage: calibrated camera ingestion, temporal pose estimation, sensor-time synchronization, uncertainty-aware fusion, object/scene layers, GPU traversal, and only then learned acceleration or post-processing. Each added layer should retain replayable data and numerical tests so that it can be compared against the baseline PoC.
+The first temporal increment now retains bounded, timestamped spatial snapshots. The recommended next steps remain to preserve deterministic validation at every stage: calibrated camera ingestion, temporal pose estimation, sensor-time synchronization, uncertainty-aware fusion, object/scene layers, GPU traversal, and only then learned acceleration or post-processing. Each added layer should retain replayable data and numerical tests so that it can be compared against the baseline PoC.

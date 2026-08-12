@@ -2,6 +2,19 @@
 
 All notable changes to Voxel4D are documented in this file. The project follows the principles of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and intends to use semantic-versioning conventions while it remains pre-1.0.
 
+## [Unreleased]
+
+### Added
+
+- `TemporalVoxelMap`, a bounded CPU-side container of strictly ordered nanosecond-timestamped SVO snapshots with deterministic oldest-snapshot eviction and historical lookup.
+- A reusable `Voxel4D::core` CMake target that separates the spatial-temporal implementation from the demonstration executable.
+- A CTest unit executable covering temporal retention, historical lookup, ordering rejection, null-snapshot rejection, and input validation.
+- An explicit temporal-map design note that separates implemented snapshot bookkeeping from unimplemented synchronization, motion, interpolation, and temporal fusion.
+
+### Changed
+
+- The demonstration now voxelizes each selected frame into an independent Octree and traces and samples the latest retained temporal snapshot.
+
 ## [0.1.0] - 2026-08-11
 
 ### Added
