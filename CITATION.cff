@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use Voxel4D, please cite the version you used."
+title: "Voxel4D: Sparse Voxel Reconstruction Research Proof of Concept"
+type: software
+version: 0.1.0
+date-released: 2026-08-11
+license: MIT
+authors:
+  - name: "Voxel4D Contributors"
+repository-code: "https://github.com/gusinistro/voxel4d"
+abstract: "A C++17 research proof of concept for synthetic multi-view RGB-D fusion into a Sparse Voxel Octree, leaf-grid DDA traversal, and Doppler field sampling."
+keywords:
+  - sparse voxel octree
+  - RGB-D
+  - 4D reconstruction
+  - ray traversal
+  - Doppler

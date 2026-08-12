@@ -1,0 +1,9 @@
+# Voxel4D Notices
+
+Voxel4D is distributed under the MIT License. See `LICENSE`.
+
+## Third-party dependency
+
+The source code includes headers from [GLM (OpenGL Mathematics)](https://github.com/g-truc/glm), a header-only C++ mathematics library. GLM is licensed under the MIT License. GLM is not vendored in this repository; users obtain it through their operating-system package manager, vcpkg, or another dependency-management method.
+
+Before redistributing a binary or adding dependencies, review all applicable third-party licenses and notices.

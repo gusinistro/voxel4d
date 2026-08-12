@@ -1,0 +1,44 @@
+name: Feature or research proposal
+description: Propose a focused improvement, experiment, or architectural direction
+title: "[Proposal]: "
+labels: [enhancement, needs-discussion]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Voxel4D is a research PoC. Please distinguish an implemented requirement from a long-term research direction.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or research question
+      description: What concrete limitation, use case, or question does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Describe the design, data contracts, assumptions, and expected outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Explain other approaches and their trade-offs.
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: State the tests, numerical checks, datasets, benchmarks, or acceptance criteria needed to evaluate this proposal.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and discussions.
+          required: true
+        - label: I understand that acceptance does not imply a timeline or production-readiness claim.
+          required: true

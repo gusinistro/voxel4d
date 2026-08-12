@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible defect in Voxel4D
+title: "[Bug]: "
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Do not include credentials, private datasets, or security vulnerabilities. For vulnerabilities, use SECURITY.md.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Provide exact commands, code, or input files needed to reproduce the issue.
+      placeholder: |
+        cmake -S . -B build ...
+        cmake --build build ...
+        ./build/voxel4d_poc
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system, compiler, compiler version, CMake version, GLM installation method, and commit or release version.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Logs and output
+      description: Paste relevant terminal output. Remove sensitive material first.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues before opening this report.
+          required: true
+        - label: I removed credentials, private data, and security-sensitive material.
+          required: true

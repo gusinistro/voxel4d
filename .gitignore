@@ -1,0 +1,35 @@
+# CMake and compiler outputs
+/build/
+/build-*/
+/cmake-build-*/
+/CMakeFiles/
+/CMakeCache.txt
+/Testing/
+compile_commands.json
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Generated demonstration data
+/data/
+*.csv
+
+# Archives and packages generated locally
+*.tar.gz
+*.tgz
+*.zip
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
