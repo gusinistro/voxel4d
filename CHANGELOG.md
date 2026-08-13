@@ -10,10 +10,19 @@ All notable changes to Voxel4D are documented in this file. The project follows 
 - A reusable `Voxel4D::core` CMake target that separates the spatial-temporal implementation from the demonstration executable.
 - A CTest unit executable covering temporal retention, historical lookup, ordering rejection, null-snapshot rejection, and input validation.
 - An explicit temporal-map design note that separates implemented snapshot bookkeeping from unimplemented synchronization, motion, interpolation, and temporal fusion.
+- Validated `SensorPose` and `SensorPoseTimeline` contracts with rigid transforms, bounded timestamped pose history, and sensor-space/world-space conversion.
+- `VisualOdometryEstimator`, a deterministic least-squares rigid alignment baseline for supplied synthetic 3D correspondences.
+- Common `SensorObservation` envelopes and deterministic adapters for synthetic RGB-D, LiDAR, radar, thermal, and IMU data.
+- `MultiSensorFuser` with world-space sample transformation, confidence, modality provenance, timestamps, RGB-D color, LiDAR/radar intensity, radar velocity, and thermal temperature attributes.
+- `AcousticRaytracer` for direct voxel-blocking queries and geometric sound travel time.
+- `SphericalHarmonicsL1` for real first-order directional radiance accumulation and evaluation.
+- `ExecutionRuntime` with CPU serial, CPU parallel, and visible fallback contracts for future GPU, NPU, and APU backends.
+- Unit coverage for spatial traversal, Doppler, sensor poses, rigid odometry, sensor observations, multisensor fusion, acoustic visibility, spherical harmonics, and execution runtime behavior.
 
 ### Changed
 
-- The demonstration now voxelizes each selected frame into an independent Octree and traces and samples the latest retained temporal snapshot.
+- The demonstration now voxelizes each selected frame into an independent Octree, retains temporal snapshots and poses, fuses synthetic multissensor observations, validates synthetic rigid odometry, and exercises DDA, acoustic, spherical-harmonic, and Doppler paths.
+- `VoxelAttribute` now records confidence, contributing modality bitmask, and last-observed timestamp in addition to spatial appearance and motion fields.
 
 ## [0.1.0] - 2026-08-11
 

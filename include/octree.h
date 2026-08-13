@@ -1,9 +1,12 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+
+#include "time_types.h"
 
 /**
  * @brief Per-voxel attributes used by the proof of concept.
@@ -16,6 +19,9 @@ struct VoxelAttribute {
     float temperature{0.0F};
     glm::vec3 velocity{0.0F};
     float density{0.0F};
+    float confidence{0.0F};
+    std::uint32_t source_modality_mask{0U};
+    voxel4d::TimestampNanoseconds last_observed_timestamp_nanoseconds{0};
     int semantic_label{0};
 };
 

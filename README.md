@@ -1,8 +1,8 @@
 # Voxel4D
 
-> A C++17 research proof of concept for timestamped multi-view RGB-D snapshots in Sparse Voxel Octrees (SVOs), leaf-grid DDA traversal, and Doppler-field sampling.
+> A C++17 research proof of concept for temporal multi-observation fusion in Sparse Voxel Octrees (SVOs), deterministic 3D odometry, direct acoustic visibility, and low-frequency spherical-harmonic lighting.
 
-**Voxel4D is an early research prototype, not a production-ready reconstruction engine.** Its purpose is to provide a small, reproducible code base for experimenting with the lower-level pieces of a future 4D spatial-capture pipeline. The current implementation uses deterministic synthetic RGB-D inputs and bounded timestamped spatial snapshots rather than physical cameras or a motion-estimation system.
+**Voxel4D is an early research prototype, not a production-ready reconstruction engine.** It provides a small, reproducible CPU baseline for the lower-level pieces of a future 4D spatial-capture pipeline. The current implementation uses deterministic synthetic observations, supplied synthetic 3D correspondences, and bounded timestamped SVO snapshots; it does not connect to physical devices or perform image feature matching.
 
 | Project property | Current value |
 |---|---|
@@ -15,17 +15,20 @@
 
 ## What the PoC demonstrates
 
-The executable exercises a coherent baseline pipeline. It generates two virtual pinhole-camera views of a moving sphere, serializes them as RGB-D samples, projects each selected frame into an independent bounded SVO, retains those SVOs as timestamped snapshots, tests a ray against the latest occupied leaf voxels with DDA, and samples a classical acoustic Doppler field around a moving source.
+The executable generates and replays two virtual RGB-D camera views, fuses each selected frame into an independent bounded SVO, adds deterministic RGB-D/LiDAR/radar/thermal/IMU observation envelopes with confidence and modality provenance, retains timestamped snapshots and poses, estimates a known synthetic rigid motion from point correspondences, traces a DDA ray and direct acoustic path, evaluates first-order spherical harmonics, and samples a classical acoustic Doppler field.
 
 | Component | Included on the current main branch | Important limit |
 |---|---|---|
-| Sparse Voxel Octree | Yes | The PoC allocates sibling nodes when refining an occupied path; it is not a memory-optimized production SVO. |
-| Pixel-to-voxel fusion | Yes | Inputs are synthetic RGB-D; calibration, uncertainty, and sensor timing are not yet modeled. |
-| Timestamped SVO snapshots | Yes | Snapshots are CPU-resident, discrete, strictly time-ordered, and retained with a fixed count; no interpolation or temporal fusion is performed. |
-| DDA voxel traversal | Yes | Traversal runs at the finest leaf resolution and is CPU-only. |
-| Acoustic Doppler sampling | Yes | It does not simulate acoustic occlusion, reflections, diffraction, or reverberation. |
-| Optical Doppler helper | Yes | It is a numerical helper, not an optical renderer. |
-| Visual odometry, LiDAR, radar, thermal sensors, spherical harmonics, AI, GPU/NPU acceleration | No | These are planned research directions, not implemented features. |
+| Sparse Voxel Octree | Yes | The PoC allocates sibling nodes when refining an occupied path; it is not a compact production SVO. |
+| Pixel-to-voxel fusion | Yes | Inputs are deterministic synthetic RGB-D; calibration and uncertainty are not estimated. |
+| Timestamped SVO and pose histories | Yes | CPU-resident, discrete, strictly ordered, bounded by count; no interpolation or clock synchronization. |
+| Synthetic RGB-D, LiDAR, radar, thermal, and IMU envelopes | Yes | They are generated adapters, not device drivers or real sensor capture. |
+| Deterministic rigid 3D odometry | Yes | It consumes supplied correspondences; no feature extraction, matching, RANSAC, or loop closure. |
+| Multisensor attribute fusion | Yes | It is deterministic confidence/provenance fusion, not probabilistic mapping or SLAM. |
+| DDA voxel traversal and direct acoustic blocking | Yes | CPU-only direct path; no hierarchical skipping, reflections, diffraction, or reverberation. |
+| Spherical harmonics | Yes | Real first-order directional radiance only; no renderer or higher-order lighting. |
+| GPU/NPU/APU execution | Architecture only | Requests fall back visibly to CPU until dedicated backend implementations exist. |
+| AI and real-time production deployment | No | Future research and engineering directions. |
 
 ## Quick start
 
@@ -57,7 +60,7 @@ ctest --test-dir build --output-on-failure
 ./build/voxel4d_poc
 ```
 
-The executable writes deterministic RGB-D CSV frames under `build/data/` when run from the build directory. A successful run reports the number of fused samples, retained temporal snapshots, latest-SVO nodes, a DDA hit, and Doppler-field samples.
+The executable writes deterministic RGB-D CSV frames under `build/data/` when run from the build directory. A successful run reports RGB-D and multissensor fusion counts, temporal provenance, synthetic odometry RMS error, DDA and acoustic-path results, spherical-harmonic radiance, and Doppler-field samples.
 
 ### Sanitizer run on GCC or Clang
 
@@ -90,14 +93,19 @@ ASAN_OPTIONS=detect_leaks=1 ctest --test-dir build-sanitized --output-on-failure
 
 ```mermaid
 flowchart LR
-    A[Two synthetic RGB-D cameras] --> B[CSV RGB-D frames]
+    A[Synthetic RGB-D cameras] --> B[CSV RGB-D frames]
     B --> C[Pixel-to-voxel projection]
-    C --> D[Sparse Voxel Octree]
-    D --> E[Leaf-grid DDA ray traversal]
-    D --> F[Doppler field sampling]
+    C --> D[Per-frame Sparse Voxel Octree]
+    E[Synthetic LiDAR, radar, thermal, IMU] --> F[Validated sensor observations]
+    F --> G[Confidence and provenance fusion]
+    D --> G
+    G --> H[Timestamped SVO snapshots]
+    H --> I[DDA and direct acoustic queries]
+    H --> J[Doppler field and L1 spherical harmonics]
+    K[3D correspondences] --> L[Deterministic rigid odometry]
 ```
 
-Read [the architecture note](docs/architecture.md) and the [temporal voxel map design](docs/temporal-voxel-map.md) for data contracts, coordinate conventions, validation criteria, and known limitations. The original Portuguese research notes are retained under `docs/` for historical context; they are **concept notes**, not a statement of implemented capability.
+Read [the architecture note](docs/architecture.md), the [temporal voxel map design](docs/temporal-voxel-map.md), and [current capabilities and hardware path](docs/current-capabilities.md) for contracts, validation criteria, supported execution behavior, and known limits. The original Portuguese research notes are retained under `docs/` for historical context; they are **concept notes**, not a statement of implemented capability.
 
 ## Contributing
 

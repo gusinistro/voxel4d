@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <deque>
 #include <memory>
 
 #include "octree.h"
+#include "time_types.h"
 
 /**
  * @brief Bounded, ordered collection of timestamped spatial voxel snapshots.
@@ -17,7 +17,7 @@
  */
 class TemporalVoxelMap {
    public:
-    using TimestampNanoseconds = std::int64_t;
+    using TimestampNanoseconds = voxel4d::TimestampNanoseconds;
 
     /**
      * @param max_snapshots Maximum number of retained snapshots; must be positive.

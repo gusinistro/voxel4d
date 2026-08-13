@@ -1,10 +1,10 @@
-# Voxel4D Architecture Note
+# Voxel4D Architecture
 
 ## Purpose
 
-Voxel4D is a compact C++17 proof of concept for experimenting with a deterministic path from multiple RGB-D observations to a voxel representation. It is designed to make its state, units, and limitations visible rather than to claim full real-time 4D reconstruction.
+Voxel4D is a compact C++17 proof of concept for experimenting with a deterministic path from synthetic multi-observation inputs to time-indexed voxel state. It is designed to make state, units, provenance, and limitations inspectable rather than to claim full real-time 4D reconstruction.
 
-> **Scope boundary:** the repository currently processes only its own synthetic RGB-D frames and bounded timestamped SVO snapshots. It does not implement camera capture, calibration, visual odometry, sensor-time synchronization, LiDAR/radar/thermal fusion, neural inference, spherical harmonics, Gaussian splatting, free-viewpoint rendering, GPU acceleration, or physical sound transport.
+> **Scope boundary:** the repository processes deterministic synthetic RGB-D and simulated multissensor observations, bounded timestamped SVO snapshots, supplied synthetic 3D correspondences, direct acoustic blocking, and first-order spherical harmonics. It does not implement physical device capture, calibration estimation, image feature matching, RANSAC, sensor clock synchronization, real LiDAR/radar/thermal/IMU drivers, neural inference, Gaussian splatting, free-viewpoint rendering, actual GPU/NPU/APU backends, or full physical sound transport.
 
 ## Data flow
 
@@ -14,13 +14,17 @@ flowchart TD
     B --> C[CSV: x, y, depth_m, r, g, b]
     C --> D[Camera-ray reconstruction]
     D --> E[Per-frame bounded Sparse Voxel Octree]
-    E --> F[Timestamped Temporal Voxel Map]
+    J[Synthetic LiDAR, radar, thermal, IMU] --> K[Validated sensor observations]
+    K --> L[Confidence and provenance fusion]
+    E --> L
+    L --> F[Timestamped Temporal Voxel Map]
     F --> G[Latest occupied leaf query]
-    G --> H[Leaf-grid DDA traversal]
-    F --> I[Receiver-position Doppler samples]
+    G --> H[Leaf-grid DDA and direct acoustic traversal]
+    F --> I[Receiver Doppler and L1 spherical harmonics]
+    M[3D point correspondences] --> N[Deterministic rigid odometry]
 ```
 
-The pipeline intentionally writes and reads the CSV frames before fusion. This exercises a simple serialized input boundary that can later be replaced by calibrated camera, LiDAR, or other sensor adapters.
+The pipeline intentionally writes and reads RGB-D CSV frames before fusion. The synthetic sensor adapter is a separate, validated input boundary for RGB-D, LiDAR, radar, thermal, and IMU envelopes. Both are replayable sources for testing contracts before real-device adapters are introduced.
 
 ## Coordinate and unit conventions
 
@@ -29,6 +33,8 @@ The pipeline intentionally writes and reads the CSV frames before fusion. This e
 | Coordinate system | Right-handed world coordinates, using GLM vectors. |
 | World length | Metres. |
 | Velocity | Metres per second. |
+| Timestamp | Signed integer nanoseconds in a monotonic timeline. |
+| Sensor confidence | Dimensionless value in the closed interval [0, 1]. |
 | Acoustic frequency | Hertz. |
 | Optical wavelength | Metres. |
 | Camera projection | Pinhole camera with vertical field of view in degrees. |
@@ -41,31 +47,38 @@ The pipeline intentionally writes and reads the CSV frames before fusion. This e
 | Module | Responsibility | Contract |
 |---|---|---|
 | `SyntheticDataGenerator` | Creates deterministic two-camera RGB-D observations of a moving sphere. | Throws for invalid dimensions, frame counts, malformed CSV, or unavailable output paths. |
-| `Voxelizer` | Converts an RGB-D pixel into a world-space point along the corresponding camera ray. | Validates camera intrinsics, image bounds, and depth clipping range before insertion. |
-| `SparseVoxelOctree` | Stores `VoxelAttribute` values at a configurable maximum depth. | Rejects out-of-bounds insertions and exposes empty leaves with density zero. |
-| `TemporalVoxelMap` | Retains discrete SVO snapshots in strictly increasing timestamp order. | Uses signed nanosecond timestamps, rejects null, duplicate, and out-of-order snapshots, and evicts only the oldest snapshot when its fixed count is exceeded. It is not thread-safe. |
-| `VoxelRaytracer` | Traverses cells at the finest leaf resolution using a 3D DDA. | Requires a non-zero ray direction and returns the first occupied cell, if any. |
-| `DopplerSimulator` | Computes classical acoustic ratios and a longitudinal relativistic optical helper. | Assumes a stationary acoustic medium; sound-field samples are receivers, not a transport simulation. |
+| `Voxelizer` | Converts RGB-D pixels into world-space samples. | Validates camera intrinsics, image bounds, and depth clipping range before insertion. |
+| `SparseVoxelOctree` | Stores spatial voxel attributes. | Rejects out-of-bounds insertions; attributes include occupancy, confidence, modality bitmask, and last-observed timestamp. |
+| `TemporalVoxelMap` | Retains discrete SVO snapshots in strictly increasing timestamp order. | Rejects null, duplicate, and out-of-order snapshots and evicts only the oldest snapshot when its fixed count is exceeded. |
+| `SensorPose` / `SensorPoseTimeline` | Represents validated rigid transforms and bounded ordered pose histories. | Preserves supplied poses; it does not estimate calibration, motion interpolation, or clock alignment. |
+| `VisualOdometryEstimator` | Fits rigid motion to supplied 3D correspondence pairs. | It has no image feature extraction, matching, RANSAC, loop closure, or real-camera integration. |
+| `SensorObservation` / `SyntheticSensorAdapter` | Provides validated synthetic RGB-D, LiDAR, radar, thermal, and IMU envelopes. | They are deterministic adapters, not hardware drivers. |
+| `MultiSensorFuser` | Fuses spatial samples with confidence, modality bitmask, and timestamp provenance. | It is not TSDF, probabilistic occupancy, uncertainty filtering, or SLAM. |
+| `VoxelRaytracer` / `AcousticRaytracer` | Performs leaf-grid DDA and direct-path acoustic blocking. | Acoustic tracing excludes reflections, diffraction, reverberation, and frequency-dependent attenuation. |
+| `SphericalHarmonicsL1` | Accumulates and evaluates real first-order directional radiance. | It does not load environment maps, trace light transport, or shade a renderer. |
+| `ExecutionRuntime` | Runs independent index ranges on CPU serial or CPU parallel execution. | GPU, NPU, and APU requests report a CPU fallback until specific backends are implemented. |
+| `DopplerSimulator` | Computes classical acoustic ratios and a longitudinal relativistic optical helper. | Assumes a stationary acoustic medium; field samples are receivers, not a full transport simulation. |
 
-## SVO implementation detail
+## Spatial storage and traversal
 
-The data structure is **sparse with respect to occupied paths**, but it is deliberately simple: refining an occupied node allocates eight children. This makes the code easy to inspect but is not the compact pointerless or DAG-based SVO design commonly used in production renderers. Memory compaction, node pooling, Morton ordering, bitmasks, confidence-based temporal aging, and GPU-resident storage remain future work.
+The Octree is **sparse with respect to occupied paths**, but intentionally simple: refining an occupied node allocates eight children. This keeps the PoC inspectable but is not a compact pointerless or DAG-based SVO. Node pooling, Morton ordering, bitmasks for child topology, confidence aging, temporal compression, and GPU-resident storage remain future work.
 
-## DDA implementation detail
-
-The octree keeps sparse attributes, while the DDA uses the smallest leaf-cell size as a regular traversal grid. At each visited cell, the tracer queries the SVO and accepts the first leaf whose density is positive. This is deterministic and suitable for the PoC, but it does not yet skip empty octree regions hierarchically. A production implementation should combine hierarchical node traversal with GPU kernels, packet/coherent rays, and sensor-confidence weighting.
+The DDA implementation traverses the regular grid implied by the finest Octree leaf size and queries the SVO for occupancy. This is deterministic and suitable for validation, but it does not hierarchically skip empty regions. Production traversal should combine compact node storage, hierarchical skipping, packet/coherent rays, and dedicated accelerator kernels.
 
 ## Physics boundary
 
-The acoustic helper applies the classical Doppler relationship for a stationary medium. The optical helper computes the longitudinal special-relativistic frequency ratio for a moving source and stationary observer. Neither helper integrates wave propagation through the voxel environment.
-
 | Included | Not included |
 |---|---|
-| Frequency shift at sampled receiver positions | Acoustic occlusion and transmission loss |
-| Moving source and observer velocities for sound | Reflections, diffraction, reverberation, or impulse responses |
-| Moving source for optical ratio | Refraction, scattering, polarization, or spectral rendering |
-| Explicit SI-style units in API names | A complete 4D physics solver |
+| Classical acoustic Doppler at sampled receiver positions | Reflections, diffraction, reverberation, or impulse responses |
+| Longitudinal relativistic optical ratio | Refraction, scattering, polarization, or spectral rendering |
+| Direct occupied-voxel acoustic blocking and geometric travel time | Frequency-dependent transmission loss and wave-equation simulation |
+| First-order real spherical-harmonic radiance | Higher-order lighting, environment maps, or global illumination |
+| Explicit SI-style units in APIs | A complete 4D physics solver |
+
+## Hardware execution boundary
+
+The portable CPU serial path is the correctness baseline for older hardware. CPU parallel execution is available only for independent index-range callbacks whose caller can safely execute concurrently. GPU, NPU, and APU requests currently select a visible CPU-serial fallback, so the code never silently claims acceleration that is not present.
 
 ## Evolution path
 
-The first temporal increment now retains bounded, timestamped spatial snapshots. The recommended next steps remain to preserve deterministic validation at every stage: calibrated camera ingestion, temporal pose estimation, sensor-time synchronization, uncertainty-aware fusion, object/scene layers, GPU traversal, and only then learned acceleration or post-processing. Each added layer should retain replayable data and numerical tests so that it can be compared against the baseline PoC.
+The current baseline includes timestamped spatial snapshots, supplied-pose histories, deterministic rigid alignment, simulated multissensor envelopes, attribute provenance fusion, direct acoustic blocking, L1 spherical harmonics, and a portable execution facade. The next steps must preserve deterministic validation while adding calibrated device ingestion, image correspondence and outlier handling, clock synchronization, uncertainty-aware fusion, compact voxel storage, actual accelerator kernels, and only then learned acceleration or post-processing.
