@@ -39,15 +39,18 @@ voxel4d::PnmImage make_pattern(const int horizontal_shift) {
     return image;
 }
 
-voxel4d::DecodedRgbdFrame make_frame(const voxel4d::CalibratedCamera* camera,
-                                     const voxel4d::PnmImage& color,
-                                     const voxel4d::TimestampNanoseconds timestamp) {
+voxel4d::DecodedRgbdFrame make_frame(
+    const voxel4d::CalibratedCamera* camera, const voxel4d::PnmImage& color,
+    const voxel4d::TimestampNanoseconds timestamp,
+    const voxel4d::DepthConvention depth_convention = voxel4d::DepthConvention::kAlongUnitRay) {
     voxel4d::PnmImage depth{kWidth, kHeight, 1, 1000U, {}};
     depth.samples.assign(static_cast<std::size_t>(kWidth * kHeight), 1000U);
-    return voxel4d::DecodedRgbdFrame{
+    voxel4d::DecodedRgbdFrame frame{
         voxel4d::CalibratedRecordedFrame{
             camera, voxel4d::RecordedCameraFrame{"camera", timestamp, "color.ppm", "depth.pgm"}},
         color, depth, 0.001F};
+    frame.depth_convention = depth_convention;
+    return frame;
 }
 
 }  // namespace
@@ -71,6 +74,19 @@ int main() {
     test.expect_near(
         result.median_pixel_displacement.y, 0.0F, 0.01F,
         "Image odometry median displacement must retain the synthetic vertical position");
+
+    const voxel4d::DecodedRgbdFrame axial_previous =
+        make_frame(&camera, make_pattern(0), 300, voxel4d::DepthConvention::kOpticalAxis);
+    const voxel4d::DecodedRgbdFrame axial_current =
+        make_frame(&camera, make_pattern(2), 400, voxel4d::DepthConvention::kOpticalAxis);
+    const voxel4d::ImageVisualOdometryResult axial_result =
+        estimator.estimate_rgbd_motion(axial_previous, axial_current);
+    test.expect(
+        axial_result.success && axial_result.rigid_motion.root_mean_square_error_meters < 1.0e-4F,
+        "Axial depth must produce a rigid planar translation under pinhole lifting");
+    test.expect_near(axial_result.rigid_motion.current_from_previous.translation_meters.x,
+                     2.0F / 70.0F, 1.0e-4F,
+                     "Axial depth lifting must recover the expected optical-axis translation");
 
     test.expect_throws<std::invalid_argument>(
         [] { static_cast<void>(voxel4d::ImageVisualOdometry(2, 1, 0.1F, 1)); },

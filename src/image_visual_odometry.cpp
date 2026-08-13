@@ -34,12 +34,15 @@ glm::vec3 point_in_camera_meters(const DecodedRgbdFrame& frame, const glm::ivec2
                     intrinsics.focal_length_x_pixels;
     const float y = -(static_cast<float>(pixel.y) - intrinsics.principal_point_y_pixels) /
                     intrinsics.focal_length_y_pixels;
-    const glm::vec3 ray = glm::normalize(glm::vec3(x, y, -1.0F));
+    const glm::vec3 optical_axis_ray(x, y, -1.0F);
     const float depth_meters = frame.depth_meters_at(pixel.x, pixel.y);
     if (!std::isfinite(depth_meters) || depth_meters <= 0.0F) {
         throw std::invalid_argument("RGB-D correspondence has invalid depth");
     }
-    return ray * depth_meters;
+    if (frame.depth_convention == DepthConvention::kOpticalAxis) {
+        return optical_axis_ray * depth_meters;
+    }
+    return glm::normalize(optical_axis_ray) * depth_meters;
 }
 
 bool compatible_cameras(const DecodedRgbdFrame& previous, const DecodedRgbdFrame& current) {

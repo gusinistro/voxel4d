@@ -19,6 +19,10 @@ compile_commands.json
 /data/
 *.csv
 
+# Versioned reference-validation outputs
+!/validation/
+!/validation/*.csv
+
 # Archives and packages generated locally
 *.tar.gz
 *.tgz

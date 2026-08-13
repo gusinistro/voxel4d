@@ -25,11 +25,19 @@ All notable changes to Voxel4D are documented in this file. The project follows 
 - Optional semantic-inference provider contracts, including explicit unavailable and replayed-label providers without a bundled learned model.
 - `voxel4d_render_benchmark`, a reproducible fixed-workload CPU serial/parallel rendering benchmark.
 - Unit coverage for spatial traversal, Doppler, sensor poses, rigid odometry, sensor observations, multisensor fusion, acoustic visibility, spherical harmonics, execution runtime behavior, multiview geometry, object tracking, temporal velocity, free-view rendering, CSV replay, and semantic interfaces.
+- `TumRgbdDataset` and optional libpng decoding for public TUM RGB-D associations, 8-bit RGB PNG frames, 16-bit depth PNG frames, and timestamped reference poses.
+- `voxel4d_tum_odometry_eval`, a configurable CSV-producing CPU replay tool for relative-pose error measurement on consecutive TUM RGB-D pairs.
+- Committed per-pair evidence from a 50-pair TUM `freiburg1_xyz` CPU reference run, with documented parameters, TUM attribution, and explicit scope limits.
 
 ### Changed
 
 - The demonstration now executes a twelve-step integrated scenario covering calibrated synchronization and triangulation, track identity, strict observation replay, optional labels, free-view output, and CPU timing in addition to temporal fusion, odometry, DDA, acoustics, lighting, and Doppler.
 - `VoxelAttribute` now records confidence, contributing modality bitmask, last observed position, timestamp, semantic label, and temporal velocity in addition to spatial appearance and radar-motion fields.
+- Decoded RGB-D frames now declare whether depth is normalized-ray distance or optical-axis depth, allowing sensor-specific adapters to preserve their source geometry.
+
+### Fixed
+
+- Corrected TUM RGB-D lifting so 16-bit axial depth is projected with pinhole optical-axis geometry instead of being interpreted as normalized-ray distance.
 
 ## [0.1.0] - 2026-08-11
 

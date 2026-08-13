@@ -20,14 +20,24 @@ struct PnmImage {
     [[nodiscard]] std::uint16_t sample_at(int x_pixels, int y_pixels, int channel) const;
 };
 
+/** @brief Geometric convention used by the decoded depth values. */
+enum class DepthConvention {
+    /** The depth sample is distance along the corresponding normalized camera ray. */
+    kAlongUnitRay,
+    /** The depth sample is the positive magnitude on the camera optical axis. */
+    kOpticalAxis,
+};
+
 /** @brief A decoded RGB-D pair associated with one calibrated recorded camera frame. */
 struct DecodedRgbdFrame {
     CalibratedRecordedFrame recorded_frame{};
     PnmImage color{};
     PnmImage depth{};
     float depth_scale_meters_per_unit{0.0F};
+    DepthConvention depth_convention{DepthConvention::kAlongUnitRay};
 
     [[nodiscard]] bool is_valid() const;
+    /** @return Depth in meters in the declared `depth_convention`. */
     [[nodiscard]] float depth_meters_at(int x_pixels, int y_pixels) const;
 };
 

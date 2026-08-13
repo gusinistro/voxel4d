@@ -8,6 +8,7 @@ project(Voxel4D
 option(VOXEL4D_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 option(VOXEL4D_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 option(VOXEL4D_BUILD_BENCHMARKS "Build reproducible CPU benchmark executables" ON)
+option(VOXEL4D_BUILD_TOOLS "Build reproducible dataset evaluation tools" ON)
 
 find_package(glm CONFIG QUIET)
 if(NOT TARGET glm::glm)
@@ -20,6 +21,7 @@ if(NOT TARGET glm::glm)
 endif()
 
 find_package(Threads REQUIRED)
+find_package(PNG QUIET)
 
 add_library(voxel4d_core STATIC
     src/acoustic_raytracer.cpp
@@ -44,6 +46,7 @@ add_library(voxel4d_core STATIC
     src/synthetic_data_generator.cpp
     src/synthetic_sensor_adapter.cpp
     src/temporal_voxel_map.cpp
+    src/tum_rgbd_dataset.cpp
     src/visual_odometry.cpp
     src/voxelizer.cpp
 )
@@ -55,6 +58,12 @@ target_include_directories(voxel4d_core
         ${PROJECT_SOURCE_DIR}/include
 )
 target_link_libraries(voxel4d_core PUBLIC glm::glm Threads::Threads)
+if(PNG_FOUND)
+    target_link_libraries(voxel4d_core PUBLIC PNG::PNG)
+    target_compile_definitions(voxel4d_core PUBLIC VOXEL4D_HAVE_PNG=1)
+else()
+    target_compile_definitions(voxel4d_core PUBLIC VOXEL4D_HAVE_PNG=0)
+endif()
 
 function(voxel4d_apply_build_settings target_name)
     if(MSVC)
@@ -91,6 +100,12 @@ if(VOXEL4D_BUILD_BENCHMARKS)
     voxel4d_apply_build_settings(voxel4d_render_benchmark)
 endif()
 
+if(VOXEL4D_BUILD_TOOLS)
+    add_executable(voxel4d_tum_odometry_eval tools/tum_odometry_eval.cpp)
+    target_link_libraries(voxel4d_tum_odometry_eval PRIVATE Voxel4D::core)
+    voxel4d_apply_build_settings(voxel4d_tum_odometry_eval)
+endif()
+
 include(CTest)
 if(BUILD_TESTING)
     function(voxel4d_add_unit_test target_name source_file)
@@ -119,6 +134,7 @@ if(BUILD_TESTING)
     voxel4d_add_unit_test(voxel4d_recorded_multiview_dataset_test tests/recorded_multiview_dataset_test.cpp)
     voxel4d_add_unit_test(voxel4d_pnm_image_test tests/pnm_image_test.cpp)
     voxel4d_add_unit_test(voxel4d_image_visual_odometry_test tests/image_visual_odometry_test.cpp)
+    voxel4d_add_unit_test(voxel4d_tum_rgbd_dataset_test tests/tum_rgbd_dataset_test.cpp)
     voxel4d_add_unit_test(voxel4d_semantic_inference_test tests/semantic_inference_test.cpp)
 
     add_test(NAME voxel4d_poc_smoke_test COMMAND voxel4d_poc)
