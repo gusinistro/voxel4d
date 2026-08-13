@@ -18,9 +18,11 @@ struct VoxelAttribute {
     float intensity{0.0F};
     float temperature{0.0F};
     glm::vec3 velocity{0.0F};
+    glm::vec3 temporal_velocity_meters_per_second{0.0F};
     float density{0.0F};
     float confidence{0.0F};
     std::uint32_t source_modality_mask{0U};
+    glm::vec3 last_observed_position_meters{0.0F};
     voxel4d::TimestampNanoseconds last_observed_timestamp_nanoseconds{0};
     int semantic_label{0};
 };

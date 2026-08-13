@@ -16,13 +16,20 @@ All notable changes to Voxel4D are documented in this file. The project follows 
 - `MultiSensorFuser` with world-space sample transformation, confidence, modality provenance, timestamps, RGB-D color, LiDAR/radar intensity, radar velocity, and thermal temperature attributes.
 - `AcousticRaytracer` for direct voxel-blocking queries and geometric sound travel time.
 - `SphericalHarmonicsL1` for real first-order directional radiance accumulation and evaluation.
-- `ExecutionRuntime` with CPU serial, CPU parallel, and visible fallback contracts for future GPU, NPU, and APU backends.
-- Unit coverage for spatial traversal, Doppler, sensor poses, rigid odometry, sensor observations, multisensor fusion, acoustic visibility, spherical harmonics, and execution runtime behavior.
+- `ExecutionRuntime` with CPU serial, CPU parallel, explicit capabilities, worker-failure propagation, and visible fallback contracts for future GPU, NPU, and APU backends.
+- Calibrated multiview camera contracts, bounded observation synchronization, two-view ray triangulation, and pinhole reprojection diagnostics.
+- `ObjectTracker` for deterministic semantic-label-aware object identity, state, and one-step velocity across timestamps.
+- Per-modality temporal voxel velocity derived from ordered sample positions without replacing radar-measured velocity.
+- `FreeViewRenderer`, a CPU DDA first-hit calibrated virtual-camera renderer with PPM output and serial/parallel execution support.
+- `RecordedObservationCsv` for strict portable replay of recorded spatial and IMU observation envelopes.
+- Optional semantic-inference provider contracts, including explicit unavailable and replayed-label providers without a bundled learned model.
+- `voxel4d_render_benchmark`, a reproducible fixed-workload CPU serial/parallel rendering benchmark.
+- Unit coverage for spatial traversal, Doppler, sensor poses, rigid odometry, sensor observations, multisensor fusion, acoustic visibility, spherical harmonics, execution runtime behavior, multiview geometry, object tracking, temporal velocity, free-view rendering, CSV replay, and semantic interfaces.
 
 ### Changed
 
-- The demonstration now voxelizes each selected frame into an independent Octree, retains temporal snapshots and poses, fuses synthetic multissensor observations, validates synthetic rigid odometry, and exercises DDA, acoustic, spherical-harmonic, and Doppler paths.
-- `VoxelAttribute` now records confidence, contributing modality bitmask, and last-observed timestamp in addition to spatial appearance and motion fields.
+- The demonstration now executes a twelve-step integrated scenario covering calibrated synchronization and triangulation, track identity, strict observation replay, optional labels, free-view output, and CPU timing in addition to temporal fusion, odometry, DDA, acoustics, lighting, and Doppler.
+- `VoxelAttribute` now records confidence, contributing modality bitmask, last observed position, timestamp, semantic label, and temporal velocity in addition to spatial appearance and radar-motion fields.
 
 ## [0.1.0] - 2026-08-11
 

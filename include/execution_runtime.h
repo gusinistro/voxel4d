@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <vector>
 
 namespace voxel4d {
 
@@ -20,6 +21,13 @@ struct ExecutionBackendInfo {
     ExecutionBackend active{ExecutionBackend::kCpuSerial};
     bool used_fallback{false};
     std::size_t worker_count{1U};
+};
+
+/** @brief Build-time availability statement for an execution backend. */
+struct ExecutionBackendCapability {
+    ExecutionBackend backend{ExecutionBackend::kCpuSerial};
+    bool implemented{false};
+    bool available_on_current_host{false};
 };
 
 /**
@@ -49,5 +57,8 @@ class ExecutionRuntime {
 };
 
 [[nodiscard]] const char* execution_backend_name(ExecutionBackend backend);
+
+/** @return Explicitly reported backend capabilities for this build and host. */
+[[nodiscard]] std::vector<ExecutionBackendCapability> execution_backend_capabilities();
 
 }  // namespace voxel4d

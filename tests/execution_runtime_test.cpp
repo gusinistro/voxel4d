@@ -44,7 +44,21 @@ int main() {
     test.expect(
         std::string(voxel4d::execution_backend_name(voxel4d::ExecutionBackend::kNpu)) == "NPU",
         "Execution backend names must expose stable labels");
+    const std::vector<voxel4d::ExecutionBackendCapability> capabilities =
+        voxel4d::execution_backend_capabilities();
+    test.expect(capabilities.size() == 5U && capabilities.at(0).implemented &&
+                    !capabilities.at(2).implemented,
+                "Capability report must distinguish implemented CPU from unavailable GPU backends");
 
+    test.expect_throws<std::runtime_error>(
+        [&] {
+            parallel.for_each_index(8U, [](const std::size_t index) {
+                if (index == 3U) {
+                    throw std::runtime_error("worker failure");
+                }
+            });
+        },
+        "Parallel runtime must propagate worker callback failures after joining threads");
     test.expect_throws<std::invalid_argument>(
         [&] { serial.for_each_index(1U, std::function<void(std::size_t)>{}); },
         "Runtime must reject an empty execution callback");

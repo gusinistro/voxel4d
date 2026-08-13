@@ -7,6 +7,7 @@ project(Voxel4D
 
 option(VOXEL4D_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 option(VOXEL4D_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(VOXEL4D_BUILD_BENCHMARKS "Build reproducible CPU benchmark executables" ON)
 
 find_package(glm CONFIG QUIET)
 if(NOT TARGET glm::glm)
@@ -24,9 +25,15 @@ add_library(voxel4d_core STATIC
     src/acoustic_raytracer.cpp
     src/doppler_simulator.cpp
     src/execution_runtime.cpp
+    src/free_view_renderer.cpp
     src/multi_sensor_fuser.cpp
+    src/multiview_calibration.cpp
+    src/multiview_geometry.cpp
+    src/object_tracker.cpp
     src/octree.cpp
+    src/recorded_observation_csv.cpp
     src/raytracer.cpp
+    src/semantic_inference.cpp
     src/sensor_observation.cpp
     src/sensor_pose.cpp
     src/sensor_pose_timeline.cpp
@@ -75,6 +82,12 @@ add_executable(Voxel4D::poc ALIAS voxel4d_poc)
 target_link_libraries(voxel4d_poc PRIVATE Voxel4D::core)
 voxel4d_apply_build_settings(voxel4d_poc)
 
+if(VOXEL4D_BUILD_BENCHMARKS)
+    add_executable(voxel4d_render_benchmark benchmarks/render_benchmark.cpp)
+    target_link_libraries(voxel4d_render_benchmark PRIVATE Voxel4D::core)
+    voxel4d_apply_build_settings(voxel4d_render_benchmark)
+endif()
+
 include(CTest)
 if(BUILD_TESTING)
     function(voxel4d_add_unit_test target_name source_file)
@@ -94,6 +107,13 @@ if(BUILD_TESTING)
     voxel4d_add_unit_test(voxel4d_multi_sensor_fuser_test tests/multi_sensor_fuser_test.cpp)
     voxel4d_add_unit_test(voxel4d_acoustic_and_sh_test tests/acoustic_and_sh_test.cpp)
     voxel4d_add_unit_test(voxel4d_execution_runtime_test tests/execution_runtime_test.cpp)
+    voxel4d_add_unit_test(voxel4d_multiview_calibration_test tests/multiview_calibration_test.cpp)
+    voxel4d_add_unit_test(voxel4d_multiview_geometry_test tests/multiview_geometry_test.cpp)
+    voxel4d_add_unit_test(voxel4d_object_tracker_test tests/object_tracker_test.cpp)
+    voxel4d_add_unit_test(voxel4d_temporal_voxel_fusion_test tests/temporal_voxel_fusion_test.cpp)
+    voxel4d_add_unit_test(voxel4d_free_view_renderer_test tests/free_view_renderer_test.cpp)
+    voxel4d_add_unit_test(voxel4d_recorded_observation_csv_test tests/recorded_observation_csv_test.cpp)
+    voxel4d_add_unit_test(voxel4d_semantic_inference_test tests/semantic_inference_test.cpp)
 
     add_test(NAME voxel4d_poc_smoke_test COMMAND voxel4d_poc)
     set_tests_properties(voxel4d_poc_smoke_test PROPERTIES

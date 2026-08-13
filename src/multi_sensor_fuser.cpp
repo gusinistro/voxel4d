@@ -64,10 +64,28 @@ std::size_t MultiSensorFuser::fuse(const SensorObservation& observation) const {
         const float previous_weight = attribute.confidence;
         const bool has_previous_modality =
             (attribute.source_modality_mask & modality_mask(observation.modality)) != 0U;
+        if (has_previous_modality &&
+            observation.timestamp_nanoseconds < attribute.last_observed_timestamp_nanoseconds) {
+            throw std::invalid_argument(
+                "voxel observations must be temporally ordered per modality");
+        }
+        const bool has_temporal_history =
+            has_previous_modality &&
+            observation.timestamp_nanoseconds > attribute.last_observed_timestamp_nanoseconds;
+        glm::vec3 temporal_velocity(0.0F);
+        if (has_temporal_history) {
+            const float elapsed_seconds =
+                static_cast<float>(observation.timestamp_nanoseconds -
+                                   attribute.last_observed_timestamp_nanoseconds) *
+                1.0e-9F;
+            temporal_velocity =
+                (world_position - attribute.last_observed_position_meters) / elapsed_seconds;
+        }
         attribute.density = std::max(attribute.density, incoming_weight);
         attribute.confidence =
             std::clamp(previous_weight + incoming_weight * (1.0F - previous_weight), 0.0F, 1.0F);
         attribute.source_modality_mask |= modality_mask(observation.modality);
+        attribute.last_observed_position_meters = world_position;
         attribute.last_observed_timestamp_nanoseconds = std::max(
             attribute.last_observed_timestamp_nanoseconds, observation.timestamp_nanoseconds);
         if (sample.semantic_label != 0) {
@@ -105,6 +123,10 @@ std::size_t MultiSensorFuser::fuse(const SensorObservation& observation) const {
                 break;
             case SensorModality::kImu:
                 break;
+        }
+
+        if (has_temporal_history) {
+            attribute.temporal_velocity_meters_per_second = temporal_velocity;
         }
 
         if (!octree_->insert(world_position, attribute)) {
