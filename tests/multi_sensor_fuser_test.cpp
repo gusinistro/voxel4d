@@ -40,6 +40,10 @@ int main() {
         test.expect(leaf->attribute.density > 0.0F, "Fused leaf must be occupied");
         test.expect(leaf->attribute.confidence > 0.0F && leaf->attribute.confidence <= 1.0F,
                     "Fused confidence must remain in the unit interval");
+        test.expect(leaf->attribute.occupancy_observation_count == 4U &&
+                        leaf->attribute.occupancy_log_odds > 0.0F &&
+                        occupancy_probability(leaf->attribute.occupancy_log_odds) > 0.5F,
+                    "Occupied sensor hits must accumulate positive bounded probabilistic evidence");
         test.expect(leaf->attribute.source_modality_mask == expected_mask,
                     "Fused leaf must retain all contributing modality bits");
         test.expect(leaf->attribute.last_observed_timestamp_nanoseconds == 1000,

@@ -26,11 +26,14 @@ add_library(voxel4d_core STATIC
     src/doppler_simulator.cpp
     src/execution_runtime.cpp
     src/free_view_renderer.cpp
+    src/image_visual_odometry.cpp
     src/multi_sensor_fuser.cpp
     src/multiview_calibration.cpp
     src/multiview_geometry.cpp
     src/object_tracker.cpp
     src/octree.cpp
+    src/pnm_image.cpp
+    src/recorded_multiview_dataset.cpp
     src/recorded_observation_csv.cpp
     src/raytracer.cpp
     src/semantic_inference.cpp
@@ -113,6 +116,9 @@ if(BUILD_TESTING)
     voxel4d_add_unit_test(voxel4d_temporal_voxel_fusion_test tests/temporal_voxel_fusion_test.cpp)
     voxel4d_add_unit_test(voxel4d_free_view_renderer_test tests/free_view_renderer_test.cpp)
     voxel4d_add_unit_test(voxel4d_recorded_observation_csv_test tests/recorded_observation_csv_test.cpp)
+    voxel4d_add_unit_test(voxel4d_recorded_multiview_dataset_test tests/recorded_multiview_dataset_test.cpp)
+    voxel4d_add_unit_test(voxel4d_pnm_image_test tests/pnm_image_test.cpp)
+    voxel4d_add_unit_test(voxel4d_image_visual_odometry_test tests/image_visual_odometry_test.cpp)
     voxel4d_add_unit_test(voxel4d_semantic_inference_test tests/semantic_inference_test.cpp)
 
     add_test(NAME voxel4d_poc_smoke_test COMMAND voxel4d_poc)

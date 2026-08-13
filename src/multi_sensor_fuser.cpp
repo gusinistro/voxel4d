@@ -1,6 +1,8 @@
 #include "multi_sensor_fuser.h"
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace {
@@ -21,6 +23,15 @@ glm::vec3 blend(const glm::vec3& previous_value, const glm::vec3& incoming_value
         return incoming_value;
     }
     return (previous_value * previous_weight + incoming_value * incoming_weight) / total_weight;
+}
+
+float occupied_hit_log_odds(const float confidence) {
+    constexpr float kMinimumOccupiedProbability = 0.5001F;
+    constexpr float kMaximumOccupiedProbability = 0.99F;
+    const float probability = std::clamp(confidence, 0.0F, 1.0F) *
+                                  (kMaximumOccupiedProbability - kMinimumOccupiedProbability) +
+                              kMinimumOccupiedProbability;
+    return std::log(probability / (1.0F - probability));
 }
 
 }  // namespace
@@ -84,6 +95,14 @@ std::size_t MultiSensorFuser::fuse(const SensorObservation& observation) const {
         attribute.density = std::max(attribute.density, incoming_weight);
         attribute.confidence =
             std::clamp(previous_weight + incoming_weight * (1.0F - previous_weight), 0.0F, 1.0F);
+        constexpr float kMinimumLogOdds = -8.0F;
+        constexpr float kMaximumLogOdds = 8.0F;
+        attribute.occupancy_log_odds =
+            std::clamp(attribute.occupancy_log_odds + occupied_hit_log_odds(incoming_weight),
+                       kMinimumLogOdds, kMaximumLogOdds);
+        if (attribute.occupancy_observation_count < std::numeric_limits<std::uint32_t>::max()) {
+            ++attribute.occupancy_observation_count;
+        }
         attribute.source_modality_mask |= modality_mask(observation.modality);
         attribute.last_observed_position_meters = world_position;
         attribute.last_observed_timestamp_nanoseconds = std::max(

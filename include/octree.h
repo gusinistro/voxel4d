@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <glm/glm.hpp>
@@ -21,11 +22,18 @@ struct VoxelAttribute {
     glm::vec3 temporal_velocity_meters_per_second{0.0F};
     float density{0.0F};
     float confidence{0.0F};
+    float occupancy_log_odds{0.0F};
+    std::uint32_t occupancy_observation_count{0U};
     std::uint32_t source_modality_mask{0U};
     glm::vec3 last_observed_position_meters{0.0F};
     voxel4d::TimestampNanoseconds last_observed_timestamp_nanoseconds{0};
     int semantic_label{0};
 };
+
+/** @brief Convert bounded occupancy log odds to a probability in the open interval (0, 1). */
+[[nodiscard]] inline float occupancy_probability(const float occupancy_log_odds) {
+    return 1.0F / (1.0F + std::exp(-occupancy_log_odds));
+}
 
 /** @brief A node in the sparse voxel octree. */
 struct OctreeNode {

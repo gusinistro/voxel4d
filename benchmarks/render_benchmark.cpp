@@ -1,7 +1,11 @@
 #include <chrono>
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "execution_runtime.h"
 #include "free_view_renderer.h"
@@ -15,6 +19,28 @@ voxel4d::CalibratedCamera make_camera() {
     camera.intrinsics = voxel4d::CameraIntrinsics{96, 72, 80.0F, 80.0F, 48.0F, 36.0F};
     camera.world_from_camera.translation_meters = glm::vec3(0.0F, 0.0F, 12.0F);
     return camera;
+}
+
+std::size_t parse_worker_count(const int argument_count, char* const arguments[]) {
+    constexpr std::size_t kDefaultWorkerCount = 2U;
+    if (argument_count == 1) {
+        return kDefaultWorkerCount;
+    }
+    if (argument_count != 3 || std::string(arguments[1]) != "--workers") {
+        throw std::invalid_argument("Usage: voxel4d_render_benchmark [--workers N]");
+    }
+    std::size_t consumed = 0U;
+    unsigned long long parsed = 0U;
+    try {
+        parsed = std::stoull(arguments[2], &consumed, 10);
+    } catch (const std::exception&) {
+        throw std::invalid_argument("Worker count must be a positive integer");
+    }
+    if (consumed != std::string(arguments[2]).size() || parsed == 0U ||
+        parsed > std::numeric_limits<std::size_t>::max()) {
+        throw std::invalid_argument("Worker count must be a positive integer");
+    }
+    return static_cast<std::size_t>(parsed);
 }
 
 long long measure_microseconds(const voxel4d::FreeViewRenderer& renderer,
@@ -31,38 +57,46 @@ long long measure_microseconds(const voxel4d::FreeViewRenderer& renderer,
 
 }  // namespace
 
-int main() {
-    constexpr std::size_t kIterations = 3U;
-    const auto octree = std::make_shared<SparseVoxelOctree>(glm::vec3(0.0F), 50.0F, 8);
-    VoxelAttribute voxel{};
-    voxel.density = 1.0F;
-    voxel.color = glm::vec3(0.8F, 0.3F, 0.2F);
-    if (!octree->insert(glm::vec3(0.0F), voxel)) {
-        std::cerr << "benchmark setup insertion failed\n";
+int main(const int argument_count, char* const arguments[]) {
+    try {
+        constexpr std::size_t kIterations = 3U;
+        const std::size_t worker_count = parse_worker_count(argument_count, arguments);
+        const auto octree = std::make_shared<SparseVoxelOctree>(glm::vec3(0.0F), 50.0F, 8);
+        VoxelAttribute voxel{};
+        voxel.density = 1.0F;
+        voxel.color = glm::vec3(0.8F, 0.3F, 0.2F);
+        if (!octree->insert(glm::vec3(0.0F), voxel)) {
+            std::cerr << "benchmark setup insertion failed\n";
+            return 1;
+        }
+
+        const voxel4d::FreeViewRenderer renderer(octree);
+        const voxel4d::CalibratedCamera camera = make_camera();
+        const voxel4d::ExecutionRuntime serial(voxel4d::ExecutionBackend::kCpuSerial);
+        const voxel4d::ExecutionRuntime parallel(voxel4d::ExecutionBackend::kCpuParallel,
+                                                 worker_count);
+        const long long serial_microseconds =
+            measure_microseconds(renderer, camera, serial, kIterations);
+        const long long parallel_microseconds =
+            measure_microseconds(renderer, camera, parallel, kIterations);
+        const std::size_t pixels_per_render =
+            static_cast<std::size_t>(camera.intrinsics.width_pixels) *
+            static_cast<std::size_t>(camera.intrinsics.height_pixels);
+        const double serial_megapixels_per_second =
+            static_cast<double>(pixels_per_render * kIterations) /
+            static_cast<double>(serial_microseconds);
+        const double parallel_megapixels_per_second =
+            static_cast<double>(pixels_per_render * kIterations) /
+            static_cast<double>(parallel_microseconds);
+
+        std::cout << "backend,workers,iterations,total_microseconds,megapixels_per_second\n";
+        std::cout << "cpu_serial,1," << kIterations << ',' << serial_microseconds << ','
+                  << serial_megapixels_per_second << '\n';
+        std::cout << "cpu_parallel," << worker_count << ',' << kIterations << ','
+                  << parallel_microseconds << ',' << parallel_megapixels_per_second << '\n';
+        return 0;
+    } catch (const std::exception& error) {
+        std::cerr << "benchmark failed: " << error.what() << '\n';
         return 1;
     }
-
-    const voxel4d::FreeViewRenderer renderer(octree);
-    const voxel4d::CalibratedCamera camera = make_camera();
-    const voxel4d::ExecutionRuntime serial(voxel4d::ExecutionBackend::kCpuSerial);
-    const voxel4d::ExecutionRuntime parallel(voxel4d::ExecutionBackend::kCpuParallel, 2U);
-    const long long serial_microseconds =
-        measure_microseconds(renderer, camera, serial, kIterations);
-    const long long parallel_microseconds =
-        measure_microseconds(renderer, camera, parallel, kIterations);
-    const std::size_t pixels_per_render = static_cast<std::size_t>(camera.intrinsics.width_pixels) *
-                                          static_cast<std::size_t>(camera.intrinsics.height_pixels);
-    const double serial_megapixels_per_second =
-        static_cast<double>(pixels_per_render * kIterations) /
-        static_cast<double>(serial_microseconds);
-    const double parallel_megapixels_per_second =
-        static_cast<double>(pixels_per_render * kIterations) /
-        static_cast<double>(parallel_microseconds);
-
-    std::cout << "backend,iterations,total_microseconds,megapixels_per_second\n";
-    std::cout << "cpu_serial," << kIterations << ',' << serial_microseconds << ','
-              << serial_megapixels_per_second << '\n';
-    std::cout << "cpu_parallel," << kIterations << ',' << parallel_microseconds << ','
-              << parallel_megapixels_per_second << '\n';
-    return 0;
 }

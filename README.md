@@ -125,7 +125,7 @@ flowchart LR
     P[Optional semantic provider] --> G
 ```
 
-Read [the architecture note](docs/architecture.md), the [temporal voxel map design](docs/temporal-voxel-map.md), [current capabilities and hardware path](docs/current-capabilities.md), [integrated-milestone guide](docs/integrated-milestone.md), and [objective-status matrix](docs/objectives-status.md) for contracts, validation criteria, supported execution behavior, and known limits. The original Portuguese research notes are retained under `docs/` for historical context; they are **concept notes**, not a statement of implemented capability.
+Read [the architecture note](docs/architecture.md), the [temporal voxel map design](docs/temporal-voxel-map.md), [recorded RGB-D input guide](docs/recorded-rgbd-input.md), [current capabilities and hardware path](docs/current-capabilities.md), [integrated-milestone guide](docs/integrated-milestone.md), [validation environment](docs/validation-environment.md), and [objective-status matrix](docs/objectives-status.md) for contracts, validation criteria, supported execution behavior, and known limits. The original Portuguese research notes are retained under `docs/` for historical context; they are **concept notes**, not a statement of implemented capability.
 
 ## Contributing
 
