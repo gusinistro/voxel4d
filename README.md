@@ -91,6 +91,19 @@ After obtaining the public [`freiburg1_xyz` TUM RGB-D sequence](https://cvg.cit.
 
 The committed CPU reference run reports 50/50 successful adjacent-pair estimates, with 0.027330 m median translational relative-pose error and 0.893230° median rotational relative-pose error. It is a narrow offline baseline, not a claim of SLAM quality or real-time performance; see the [recorded RGB-D input guide](docs/recorded-rgbd-input.md) and its per-pair CSV evidence.
 
+### Integrate TUM RGB-D into temporal SVO snapshots
+
+The reconstruction evaluator replays associated TUM frames, estimates camera-to-camera motion with the dependency-free RGB-D baseline, composes a world pose, and integrates each decoded frame into a bounded temporal SVO map:
+
+```bash
+./build/voxel4d_tum_reconstruction_eval \
+  --dataset /absolute/path/rgbd_dataset_freiburg1_xyz \
+  --max-frames 10 \
+  --output validation/tum_reconstruction_first10.csv
+```
+
+Its CSV reports valid depth samples, inserted voxel samples, odometry feature counts, pose translation, and retained snapshot count. This is an offline sparse temporal reconstruction reference path; it does not claim dense SLAM, loop closure, or real-time performance.
+
 ### Sanitizer run on GCC or Clang
 
 ```bash

@@ -29,7 +29,7 @@ constexpr std::size_t kMaximumOctreeDepth = 30U;
 }
 
 [[nodiscard]] glm::vec3 sample_color(const PnmImage& image, const int x_pixels,
-                                      const int y_pixels) {
+                                     const int y_pixels) {
     const float scale = 1.0F / static_cast<float>(image.maximum_value);
     if (image.channel_count == 1) {
         const float value = static_cast<float>(image.sample_at(x_pixels, y_pixels, 0)) * scale;
