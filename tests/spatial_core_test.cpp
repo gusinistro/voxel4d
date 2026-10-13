@@ -1,4 +1,5 @@
 #include <glm/glm.hpp>
+#include <cmath>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -16,6 +17,12 @@ int main() {
     test.expect_throws<std::invalid_argument>(
         [] { static_cast<void>(SparseVoxelOctree(glm::vec3(0.0F), 1.0F, -1)); },
         "Octree must reject a negative maximum depth");
+    test.expect_throws<std::invalid_argument>(
+        [] { static_cast<void>(SparseVoxelOctree(glm::vec3(0.0F), 1.0F, 31)); },
+        "Octree must reject a depth that cannot be represented by the DDA resolution");
+    test.expect_throws<std::invalid_argument>(
+        [] { static_cast<void>(SparseVoxelOctree(glm::vec3(NAN, 0.0F, 0.0F), 1.0F, 1)); },
+        "Octree must reject a non-finite root center");
 
     const auto octree = std::make_shared<SparseVoxelOctree>(glm::vec3(0.0F), 2.0F, 2);
     test.expect(octree->contains(glm::vec3(1.0F, -1.0F, 1.0F)),

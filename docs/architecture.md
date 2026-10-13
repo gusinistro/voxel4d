@@ -4,7 +4,7 @@
 
 Voxel4D is a compact C++17 proof of concept for experimenting with a deterministic path from synthetic multi-observation inputs to time-indexed voxel state. It is designed to make state, units, provenance, and limitations inspectable rather than to claim full real-time 4D reconstruction.
 
-> **Scope boundary:** the repository processes deterministic synthetic RGB-D and simulated multissensor observations, bounded timestamped SVO snapshots, supplied synthetic 3D correspondences, direct acoustic blocking, and first-order spherical harmonics. It does not implement physical device capture, calibration estimation, image feature matching, RANSAC, sensor clock synchronization, real LiDAR/radar/thermal/IMU drivers, neural inference, Gaussian splatting, free-viewpoint rendering, actual GPU/NPU/APU backends, or full physical sound transport.
+> **Scope boundary:** the repository processes deterministic synthetic RGB-D and simulated multissensor observations, bounded timestamped SVO snapshots, supplied synthetic 3D correspondences, a narrow recorded TUM RGB-D image-odometry baseline, CPU free-view rendering, direct acoustic blocking, and first-order spherical harmonics. It does not implement physical device capture, calibration estimation, robust descriptors, RANSAC, sensor clock synchronization, real LiDAR/radar/thermal/IMU drivers, neural inference, Gaussian splatting, actual GPU/NPU/APU backends, or full physical sound transport.
 
 ## Data flow
 
@@ -51,7 +51,7 @@ The pipeline intentionally writes and reads RGB-D CSV frames before fusion. The 
 | `SparseVoxelOctree` | Stores spatial voxel attributes. | Rejects out-of-bounds insertions; attributes include occupancy, confidence, modality bitmask, and last-observed timestamp. |
 | `TemporalVoxelMap` | Retains discrete SVO snapshots in strictly increasing timestamp order. | Rejects null, duplicate, and out-of-order snapshots and evicts only the oldest snapshot when its fixed count is exceeded. |
 | `SensorPose` / `SensorPoseTimeline` | Represents validated rigid transforms and bounded ordered pose histories. | Preserves supplied poses; it does not estimate calibration, motion interpolation, or clock alignment. |
-| `VisualOdometryEstimator` | Fits rigid motion to supplied 3D correspondence pairs. | It has no image feature extraction, matching, RANSAC, loop closure, or real-camera integration. |
+| `VisualOdometryEstimator` / `ImageVisualOdometry` | Fits rigid motion to supplied 3D correspondence pairs and provides a narrow dependency-free RGB-D image baseline. | The image path has no robust descriptors, RANSAC, bundle adjustment, loop closure, or real-camera streaming integration. |
 | `SensorObservation` / `SyntheticSensorAdapter` | Provides validated synthetic RGB-D, LiDAR, radar, thermal, and IMU envelopes. | They are deterministic adapters, not hardware drivers. |
 | `MultiSensorFuser` | Fuses spatial samples with confidence, modality bitmask, and timestamp provenance. | It is not TSDF, probabilistic occupancy, uncertainty filtering, or SLAM. |
 | `VoxelRaytracer` / `AcousticRaytracer` | Performs leaf-grid DDA and direct-path acoustic blocking. | Acoustic tracing excludes reflections, diffraction, reverberation, and frequency-dependent attenuation. |

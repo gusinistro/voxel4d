@@ -37,6 +37,8 @@ All notable changes to Voxel4D are documented in this file. The project follows 
 
 ### Fixed
 
+- Rejected non-finite root geometry and Octree depths above 30, keeping the finest-grid DDA resolution within the defined integer shift range.
+- Aligned architecture and capability documentation with the implemented recorded RGB-D odometry and CPU free-view renderer, and repaired broken public-document line wraps.
 - Corrected TUM RGB-D lifting so 16-bit axial depth is projected with pinhole optical-axis geometry instead of being interpreted as normalized-ray distance.
 
 ## [0.1.0] - 2026-08-11
