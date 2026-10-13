@@ -38,6 +38,7 @@ add_library(voxel4d_core STATIC
     src/recorded_multiview_dataset.cpp
     src/recorded_observation_csv.cpp
     src/raytracer.cpp
+    src/rgbd_temporal_integrator.cpp
     src/semantic_inference.cpp
     src/sensor_observation.cpp
     src/sensor_pose.cpp
@@ -135,6 +136,7 @@ if(BUILD_TESTING)
     voxel4d_add_unit_test(voxel4d_pnm_image_test tests/pnm_image_test.cpp)
     voxel4d_add_unit_test(voxel4d_image_visual_odometry_test tests/image_visual_odometry_test.cpp)
     voxel4d_add_unit_test(voxel4d_tum_rgbd_dataset_test tests/tum_rgbd_dataset_test.cpp)
+    voxel4d_add_unit_test(voxel4d_rgbd_temporal_integrator_test tests/rgbd_temporal_integrator_test.cpp)
     voxel4d_add_unit_test(voxel4d_semantic_inference_test tests/semantic_inference_test.cpp)
 
     add_test(NAME voxel4d_poc_smoke_test COMMAND voxel4d_poc)
