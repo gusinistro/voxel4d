@@ -82,6 +82,7 @@ class SparseVoxelOctree {
     [[nodiscard]] bool contains(const glm::vec3& position) const;
 
    private:
+    static constexpr int kMaximumSupportedDepth = 30;
     std::shared_ptr<OctreeNode> root_;
     int max_depth_;
     std::size_t node_count_{1};

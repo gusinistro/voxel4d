@@ -113,7 +113,7 @@ ASAN_OPTIONS=detect_leaks=1 ctest --test-dir build-sanitized --output-on-failure
 ├── tools/                   # Reproducible recorded-dataset evaluation tools
 ├── validation/              # Versioned reference-validation CSV outputs
 ├── src/                     # C++17 implementation
-├── tests/                   # Test assets and future unit-test home
+├── tests/                   # Unit and integration-style executable tests
 ├── CMakeLists.txt           # Reproducible build configuration
 ├── CONTRIBUTING.md          # Contributor workflow
 ├── CODE_OF_CONDUCT.md       # Community expectations

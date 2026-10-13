@@ -8,12 +8,13 @@ Voxel4D now provides a deterministic, CPU-first research pipeline built from com
 |---|---|---|
 | Spatial representation | Bounded Sparse Voxel Octree with leaf occupancy, confidence, modality provenance, and last-observed timestamp. | The Octree allocates sibling children on refinement and is not a compact, GPU-resident SVO. |
 | Time | Bounded, strictly ordered SVO snapshots and bounded sensor-pose histories using nanosecond timestamps. | No interpolation, sensor clock alignment, temporal decay, or long-duration storage. |
-| RGB-D | Deterministic synthetic RGB-D generation, CSV replay, camera-ray projection, and voxel insertion. | No physical camera capture, calibration solve, depth denoising, or photometric uncertainty model. |
-| Visual odometry | Least-squares rigid alignment of supplied, finite 3D correspondences. | No feature extraction, image matching, RANSAC, loop closure, or real-camera odometry. |
+| RGB-D | Deterministic synthetic RGB-D generation, CSV replay, camera-ray projection, voxel insertion, and optional TUM RGB-D PNG replay. | No physical camera capture, calibration solve, depth denoising, or photometric uncertainty model. |
+| Visual odometry | Least-squares rigid alignment of supplied finite 3D correspondences plus a dependency-free RGB-D image baseline with gradient features, local patches, median-flow filtering, and TUM replay evaluation. | No robust descriptors, RANSAC, bundle adjustment, loop closure, or real-camera streaming. |
 | Multisensor data | Validated synthetic envelopes for RGB-D, LiDAR, radar, thermal, and IMU with poses, timestamps, units, confidence, and sensor identifiers. | No device drivers, external clock synchronization, extrinsic calibration estimation, or real sensor data ingestion. |
 | Fusion | World-space insertion with per-voxel confidence, modality bitmask, timestamp, RGB-D color, LiDAR/radar intensity, radar velocity, and thermal temperature. | This is deterministic attribute fusion, not TSDF, occupancy probability, Bayesian filtering, or SLAM. |
 | Acoustic path | Direct-path voxel blocking, geometric travel time, and classical Doppler helpers. | No reflections, diffraction, reverberation, frequency-dependent attenuation, or wave simulation. |
 | Lighting | Real first-order spherical-harmonic accumulation and evaluation. | No higher-order bands, light transport, environment-map loading, or renderer integration. |
+| Free-view rendering | Calibrated CPU DDA first-hit rendering from an occupied voxel map, with PPM output and serial/parallel execution. | No splatting, anti-aliasing, hole filling, photorealistic shading, or production display pipeline. |
 
 ## Execution architecture
 

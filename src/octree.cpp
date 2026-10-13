@@ -1,14 +1,19 @@
 #include "octree.h"
 
+#include <cmath>
 #include <stdexcept>
 
 SparseVoxelOctree::SparseVoxelOctree(const glm::vec3& root_center, float root_size, int max_depth)
     : max_depth_(max_depth) {
-    if (root_size <= 0.0F) {
+    if (!std::isfinite(root_size) || root_size <= 0.0F) {
         throw std::invalid_argument("root_size must be greater than zero");
     }
-    if (max_depth < 0) {
-        throw std::invalid_argument("max_depth must be non-negative");
+    if (!std::isfinite(root_center.x) || !std::isfinite(root_center.y) ||
+        !std::isfinite(root_center.z)) {
+        throw std::invalid_argument("root_center must be finite");
+    }
+    if (max_depth < 0 || max_depth > kMaximumSupportedDepth) {
+        throw std::invalid_argument("max_depth must be between zero and 30");
     }
 
     root_ = std::make_shared<OctreeNode>(root_center, root_size, 0);
