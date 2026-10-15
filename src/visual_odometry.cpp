@@ -1,7 +1,9 @@
 #include "visual_odometry.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace {
@@ -142,6 +144,60 @@ VisualOdometryResult VisualOdometryEstimator::estimate_rigid_motion(
     result.root_mean_square_error_meters =
         std::sqrt(squared_error / static_cast<float>(correspondences.size()));
     return result;
+}
+
+VisualOdometryResult VisualOdometryEstimator::estimate_rigid_motion_robust(
+    const std::vector<PointCorrespondence3D>& correspondences,
+    const float maximum_residual_meters) const {
+    if (!std::isfinite(maximum_residual_meters) || maximum_residual_meters <= 0.0F) {
+        throw std::invalid_argument("maximum residual must be finite and positive");
+    }
+    if (correspondences.size() < 4U) {
+        return estimate_rigid_motion(correspondences);
+    }
+
+    VisualOdometryResult best{};
+    std::size_t best_inlier_count = 0U;
+    float best_squared_error = std::numeric_limits<float>::infinity();
+    const float squared_threshold = maximum_residual_meters * maximum_residual_meters;
+    for (std::size_t excluded = 0U; excluded < correspondences.size(); ++excluded) {
+        std::vector<PointCorrespondence3D> candidate_correspondences;
+        candidate_correspondences.reserve(correspondences.size() - 1U);
+        for (std::size_t index = 0U; index < correspondences.size(); ++index) {
+            if (index != excluded) {
+                candidate_correspondences.push_back(correspondences.at(index));
+            }
+        }
+        const VisualOdometryResult candidate = estimate_rigid_motion(candidate_correspondences);
+        if (!candidate.success) {
+            continue;
+        }
+        std::size_t inlier_count = 0U;
+        float squared_error = 0.0F;
+        for (const PointCorrespondence3D& correspondence : correspondences) {
+            const glm::vec3 residual = candidate.current_from_previous.transform_point_to_world(
+                                           correspondence.previous_point_meters) -
+                                       correspondence.current_point_meters;
+            const float squared_residual = glm::dot(residual, residual);
+            if (squared_residual <= squared_threshold) {
+                ++inlier_count;
+                squared_error += squared_residual;
+            }
+        }
+        if (inlier_count > best_inlier_count ||
+            (inlier_count == best_inlier_count && squared_error < best_squared_error)) {
+            best = candidate;
+            best_inlier_count = inlier_count;
+            best_squared_error = squared_error;
+        }
+    }
+    if (best_inlier_count < 3U) {
+        return VisualOdometryResult{};
+    }
+    best.correspondence_count = best_inlier_count;
+    best.root_mean_square_error_meters =
+        std::sqrt(best_squared_error / static_cast<float>(best_inlier_count));
+    return best;
 }
 
 }  // namespace voxel4d

@@ -23,6 +23,7 @@ struct Configuration {
     int search_radius_pixels{5};
     float maximum_patch_error{0.05F};
     int displacement_inlier_tolerance_pixels{1};
+    float maximum_geometric_residual_meters{0.05F};
 };
 
 [[nodiscard]] int positive_int(const std::string& value, const std::string& option) {
@@ -57,7 +58,9 @@ struct Configuration {
                 << "  --max-features N             RGB-D odometry features (default: 300)\n"
                 << "  --search-radius N            Patch search radius in pixels (default: 5)\n"
                 << "  --max-patch-error X          Patch error limit (default: 0.05)\n"
-                << "  --displacement-tolerance N   Median-flow tolerance in pixels (default: 1)\n";
+                << "  --displacement-tolerance N   Median-flow tolerance in pixels (default: 1)\n"
+                << "  --max-geometric-residual M   3D outlier threshold in meters (default: "
+                   "0.05)\n";
             std::exit(0);
         }
         if (index + 1 >= argument_count) {
@@ -82,6 +85,8 @@ struct Configuration {
             config.maximum_patch_error = positive_float(value, option);
         } else if (option == "--displacement-tolerance") {
             config.displacement_inlier_tolerance_pixels = positive_int(value, option);
+        } else if (option == "--max-geometric-residual") {
+            config.maximum_geometric_residual_meters = positive_float(value, option);
         } else {
             throw std::invalid_argument("Unknown option: " + option);
         }
@@ -135,7 +140,7 @@ int main(const int argument_count, char* argument_values[]) {
         const auto camera = tum_fr1_camera();
         const voxel4d::ImageVisualOdometry odometry(
             config.maximum_features, config.search_radius_pixels, config.maximum_patch_error,
-            config.displacement_inlier_tolerance_pixels);
+            config.displacement_inlier_tolerance_pixels, config.maximum_geometric_residual_meters);
         const voxel4d::RgbdTemporalIntegrator integrator(config.octree_depth,
                                                          config.root_size_meters);
         TemporalVoxelMap temporal_map(config.maximum_frame_count);
