@@ -95,5 +95,20 @@ int main() {
         [] { static_cast<void>(voxel4d::ImageVisualOdometry(3, 1, 0.1F, 1, 0.0F)); },
         "Image odometry must require a positive geometric residual threshold");
 
+    voxel4d::PnmImage invalid_depth{kWidth, kHeight, 1, 1000U, {}};
+    invalid_depth.samples.assign(static_cast<std::size_t>(kWidth * kHeight), 0U);
+    voxel4d::DecodedRgbdFrame invalid_previous{
+        voxel4d::CalibratedRecordedFrame{
+            &camera, voxel4d::RecordedCameraFrame{"camera", 500, "color.ppm", "depth.pgm"}},
+        make_pattern(0), invalid_depth, 0.001F};
+    voxel4d::DecodedRgbdFrame invalid_current{
+        voxel4d::CalibratedRecordedFrame{
+            &camera, voxel4d::RecordedCameraFrame{"camera", 600, "color.ppm", "depth.pgm"}},
+        make_pattern(2), invalid_depth, 0.001F};
+    const auto invalid_depth_result =
+        estimator.estimate_rgbd_motion(invalid_previous, invalid_current);
+    test.expect(invalid_depth_result.invalid_depth_match_count > 0U,
+                "Image odometry must report matches discarded for invalid depth");
+
     return test.failures() == 0 ? 0 : 1;
 }
