@@ -24,6 +24,7 @@ struct ImageVisualOdometryResult {
     std::size_t candidate_feature_count{0U};
     std::size_t matched_feature_count{0U};
     std::size_t inlier_feature_count{0U};
+    std::size_t invalid_depth_match_count{0U};
     glm::vec2 median_pixel_displacement{0.0F};
     VisualOdometryResult rigid_motion{};
 };

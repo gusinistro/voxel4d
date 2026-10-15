@@ -252,6 +252,7 @@ ImageVisualOdometryResult ImageVisualOdometry::estimate_rgbd_motion(
                 PointCorrespondence3D{point_in_camera_meters(previous_frame, match.previous_pixel),
                                       point_in_camera_meters(current_frame, match.current_pixel)});
         } catch (const std::invalid_argument&) {
+            ++result.invalid_depth_match_count;
             continue;
         }
     }

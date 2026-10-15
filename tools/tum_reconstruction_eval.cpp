@@ -107,6 +107,7 @@ struct Configuration {
 void write_header(std::ofstream& output) {
     output << "frame_index,timestamp_seconds,status,valid_depth_samples,inserted_samples,"
               "candidate_feature_count,matched_feature_count,inlier_feature_count,"
+              "invalid_depth_match_count,"
               "pose_tx_m,pose_ty_m,pose_tz_m,snapshot_count\n";
 }
 
@@ -119,9 +120,9 @@ void write_row(std::ofstream& output, const std::size_t frame_index,
            << association.color_timestamp_seconds << ',' << status << ','
            << integration.valid_depth_samples << ',' << integration.inserted_samples << ','
            << odometry.candidate_feature_count << ',' << odometry.matched_feature_count << ','
-           << odometry.inlier_feature_count << ',' << pose.translation_meters.x << ','
-           << pose.translation_meters.y << ',' << pose.translation_meters.z << ',' << snapshot_count
-           << '\n';
+           << odometry.inlier_feature_count << ',' << odometry.invalid_depth_match_count << ','
+           << pose.translation_meters.x << ',' << pose.translation_meters.y << ','
+           << pose.translation_meters.z << ',' << snapshot_count << '\n';
 }
 }  // namespace
 
