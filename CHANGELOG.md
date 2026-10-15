@@ -29,6 +29,7 @@ All notable changes to Voxel4D are documented in this file. The project follows 
 - `voxel4d_tum_odometry_eval`, a configurable CSV-producing CPU replay tool for relative-pose error measurement on consecutive TUM RGB-D pairs.
 - `RgbdTemporalIntegrator`, which lifts calibrated RGB-D samples with axial-depth support, applies world poses, and appends bounded SVO snapshots with integration counts.
 - `voxel4d_tum_reconstruction_eval`, an offline CSV-producing tool that composes sequential RGB-D odometry poses and integrates recorded TUM frames into temporal SVO snapshots.
+- Deterministic leave-one-out geometric outlier rejection for rigid RGB-D odometry, with configurable residual threshold and explicit non-RANSAC scope.
 - Committed per-pair evidence from a 50-pair TUM `freiburg1_xyz` CPU reference run, with documented parameters, TUM attribution, and explicit scope limits.
 
 ### Changed

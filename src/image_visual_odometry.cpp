@@ -65,14 +65,18 @@ bool ImageFeatureMatch::is_valid() const {
 
 ImageVisualOdometry::ImageVisualOdometry(const int maximum_features, const int search_radius_pixels,
                                          const float maximum_patch_error,
-                                         const int displacement_inlier_tolerance_pixels)
+                                         const int displacement_inlier_tolerance_pixels,
+                                         const float maximum_geometric_residual_meters)
     : maximum_features_(maximum_features),
       search_radius_pixels_(search_radius_pixels),
       maximum_patch_error_(maximum_patch_error),
-      displacement_inlier_tolerance_pixels_(displacement_inlier_tolerance_pixels) {
+      displacement_inlier_tolerance_pixels_(displacement_inlier_tolerance_pixels),
+      maximum_geometric_residual_meters_(maximum_geometric_residual_meters) {
     if (maximum_features_ < 3 || search_radius_pixels_ < 0 ||
         !std::isfinite(maximum_patch_error_) || maximum_patch_error_ < 0.0F ||
-        displacement_inlier_tolerance_pixels_ < 0) {
+        displacement_inlier_tolerance_pixels_ < 0 ||
+        !std::isfinite(maximum_geometric_residual_meters_) ||
+        maximum_geometric_residual_meters_ <= 0.0F) {
         throw std::invalid_argument("Image visual odometry configuration is invalid");
     }
 }
@@ -255,7 +259,8 @@ ImageVisualOdometryResult ImageVisualOdometry::estimate_rgbd_motion(
     if (correspondences.size() < 3U) {
         return result;
     }
-    result.rigid_motion = VisualOdometryEstimator().estimate_rigid_motion(correspondences);
+    result.rigid_motion = VisualOdometryEstimator().estimate_rigid_motion_robust(
+        correspondences, maximum_geometric_residual_meters_);
     result.success = result.rigid_motion.success;
     return result;
 }

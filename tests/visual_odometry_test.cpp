@@ -72,5 +72,22 @@ int main() {
         [&] { static_cast<void>(estimator.estimate_rigid_motion(non_finite)); },
         "Non-finite correspondences must be rejected");
 
+    std::vector<voxel4d::PointCorrespondence3D> outlier_case{
+        {{0.0F, 0.0F, 1.0F}, {0.25F, -0.10F, 1.05F}},
+        {{0.5F, 0.0F, 1.2F}, {0.75F, -0.10F, 1.25F}},
+        {{0.0F, 0.4F, 1.5F}, {0.25F, 0.30F, 1.55F}},
+        {{-0.3F, -0.2F, 0.8F}, {-0.05F, -0.30F, 0.85F}},
+        {{0.2F, 0.1F, 1.1F}, {4.0F, -3.0F, 2.0F}},
+    };
+    const voxel4d::VisualOdometryResult robust =
+        estimator.estimate_rigid_motion_robust(outlier_case, 0.01F);
+    test.expect(robust.success, "Robust rigid estimation must reject one gross outlier");
+    test.expect(robust.correspondence_count == 4U,
+                "Robust rigid estimation must report only geometric inliers");
+    test.expect_near(robust.current_from_previous.translation_meters.x, 0.25F, 1.0e-4F,
+                     "Robust rigid estimation must recover translation despite an outlier");
+    test.expect(robust.root_mean_square_error_meters < 1.0e-4F,
+                "Robust rigid estimation must report low inlier residual");
+
     return test.failures() == 0 ? 0 : 1;
 }

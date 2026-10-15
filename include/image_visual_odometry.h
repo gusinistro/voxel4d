@@ -40,7 +40,8 @@ class ImageVisualOdometry {
    public:
     /** @throws std::invalid_argument for invalid configuration. */
     ImageVisualOdometry(int maximum_features, int search_radius_pixels, float maximum_patch_error,
-                        int displacement_inlier_tolerance_pixels);
+                        int displacement_inlier_tolerance_pixels,
+                        float maximum_geometric_residual_meters = 0.05F);
 
     [[nodiscard]] ImageVisualOdometryResult estimate_rgbd_motion(
         const DecodedRgbdFrame& previous_frame, const DecodedRgbdFrame& current_frame) const;
@@ -56,6 +57,7 @@ class ImageVisualOdometry {
     int search_radius_pixels_{0};
     float maximum_patch_error_{0.0F};
     int displacement_inlier_tolerance_pixels_{0};
+    float maximum_geometric_residual_meters_{0.0F};
 };
 
 }  // namespace voxel4d

@@ -91,6 +91,9 @@ int main() {
     test.expect_throws<std::invalid_argument>(
         [] { static_cast<void>(voxel4d::ImageVisualOdometry(2, 1, 0.1F, 1)); },
         "Image odometry must require enough features for a rigid estimate");
+    test.expect_throws<std::invalid_argument>(
+        [] { static_cast<void>(voxel4d::ImageVisualOdometry(3, 1, 0.1F, 1, 0.0F)); },
+        "Image odometry must require a positive geometric residual threshold");
 
     return test.failures() == 0 ? 0 : 1;
 }
