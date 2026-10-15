@@ -38,6 +38,7 @@ add_library(voxel4d_core STATIC
     src/recorded_multiview_dataset.cpp
     src/recorded_observation_csv.cpp
     src/raytracer.cpp
+    src/rgbd_temporal_integrator.cpp
     src/semantic_inference.cpp
     src/sensor_observation.cpp
     src/sensor_pose.cpp
@@ -104,6 +105,9 @@ if(VOXEL4D_BUILD_TOOLS)
     add_executable(voxel4d_tum_odometry_eval tools/tum_odometry_eval.cpp)
     target_link_libraries(voxel4d_tum_odometry_eval PRIVATE Voxel4D::core)
     voxel4d_apply_build_settings(voxel4d_tum_odometry_eval)
+    add_executable(voxel4d_tum_reconstruction_eval tools/tum_reconstruction_eval.cpp)
+    target_link_libraries(voxel4d_tum_reconstruction_eval PRIVATE Voxel4D::core)
+    voxel4d_apply_build_settings(voxel4d_tum_reconstruction_eval)
 endif()
 
 include(CTest)
@@ -135,9 +139,14 @@ if(BUILD_TESTING)
     voxel4d_add_unit_test(voxel4d_pnm_image_test tests/pnm_image_test.cpp)
     voxel4d_add_unit_test(voxel4d_image_visual_odometry_test tests/image_visual_odometry_test.cpp)
     voxel4d_add_unit_test(voxel4d_tum_rgbd_dataset_test tests/tum_rgbd_dataset_test.cpp)
+    voxel4d_add_unit_test(voxel4d_rgbd_temporal_integrator_test tests/rgbd_temporal_integrator_test.cpp)
     voxel4d_add_unit_test(voxel4d_semantic_inference_test tests/semantic_inference_test.cpp)
 
     add_test(NAME voxel4d_poc_smoke_test COMMAND voxel4d_poc)
     set_tests_properties(voxel4d_poc_smoke_test PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    if(VOXEL4D_BUILD_TOOLS)
+        add_test(NAME voxel4d_tum_reconstruction_eval_help
+                 COMMAND voxel4d_tum_reconstruction_eval --help)
+    endif()
 endif()

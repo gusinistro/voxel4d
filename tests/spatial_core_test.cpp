@@ -1,5 +1,5 @@
-#include <glm/glm.hpp>
 #include <cmath>
+#include <glm/glm.hpp>
 #include <memory>
 #include <stdexcept>
 #include <vector>
